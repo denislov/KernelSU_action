@@ -130,7 +130,7 @@ jobs:
         git clone https://github.com/denislov/anykernel3.git
         cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} anykernel3/kernels/${{ env.OS_TYPE }}/
         cp android-kernel/out/arch/arm64/boot/dtbo.img anykernel3/kernels/${{ env.OS_TYPE }}/
-        find android-kernel/out/arch/arm64/boot/dts/${{ env.HARDWARE_CODE }} -name '*.dtb' -exec cat {} + > anykernel3/kernels/${{ env.OS_TYPE }}/dtb
+        find android-kernel/out/arch/arm64/boot/dts/vendor/${{ env.HARDWARE_CODE }} -name '*.dtb' -exec cat {} + > anykernel3/kernels/${{ env.OS_TYPE }}/dtb
         rm -rf anykernel3/.git* anykernel3/README.md
 
     - name: Upload AnyKernel3
