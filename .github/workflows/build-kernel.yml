@@ -17,10 +17,6 @@ on:
         description: 'Defconfig'
         required: true
         default: 'alioth_lmperf_defconfig'
-      KERNEL_FILE:
-        description: 'Your kernel out image name'
-        required: true
-        default: 'Image'
       CLANG_VERSION:
         description: 'Clang version'
         required: true
@@ -34,19 +30,11 @@ on:
         required: true
         default: 'true'
         type: boolean
-      USE_KPROBES:
-        description: 'Use Kprobes'
+      USE_DOCKER:
+        description: 'Use Docker'
         required: false
         default: 'true'
         type: boolean
-      OS_TYPE:
-        description: 'Os Type'
-        required: false
-        default: 'miui'
-      HARDWARE_CODE:
-        description: 'Hardware Vendor Name'
-        required: false
-        default: 'qcom'
 
 jobs:
   build:
@@ -60,24 +48,18 @@ jobs:
             echo "KERNEL_SOURCE=$(cat config.env | grep "KERNEL_SOURCE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
             echo "KERNEL_SOURCE_BRANCH=$(cat config.env | grep "KERNEL_SOURCE_BRANCH" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
             echo "KERNEL_DEFCONFIG=$(cat config.env | grep "KERNEL_DEFCONFIG" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-            echo "KERNEL_FILE=$(cat config.env | grep "KERNEL_FILE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
             echo "CLANG_VERSION=$(cat config.env | grep "CLANG_VERSION" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
             echo "BUILD_EXTRA_COMMAND=$(cat config.env | grep "EXTRA_BUILD_COMMAND" | head -n 1 | cut -d ":" -f 2)" >> $GITHUB_ENV
             echo "USE_KERNELSU=$(cat config.env | grep "USE_KERNELSU" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-            echo "USE_KPROBES=$(cat config.env | grep "USE_KPROBES" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-            echo "OS_TYPE=$(cat config.env | grep "OS_TYPE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-            echo "HARDWARE_CODE=$(cat config.env | grep "HARDWARE_CODE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+            echo "USE_DOCKER=$(cat config.env | grep "USE_DOCKER" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         else
             echo "KERNEL_SOURCE=${{ github.event.inputs.KERNEL_SOURCE }}" >> $GITHUB_ENV
             echo "KERNEL_SOURCE_BRANCH=${{ github.event.inputs.KERNEL_SOURCE_BRANCH }}" >> $GITHUB_ENV
             echo "KERNEL_DEFCONFIG=${{ github.event.inputs.KERNEL_DEFCONFIG }}" >> $GITHUB_ENV
-            echo "KERNEL_FILE=${{ github.event.inputs.KERNEL_FILE }}" >> $GITHUB_ENV
             echo "CLANG_VERSION=${{ github.event.inputs.CLANG_VERSION }}" >> $GITHUB_ENV
             echo "BUILD_EXTRA_COMMAND=${{ github.event.inputs.BUILD_EXTRA_COMMAND }}" >> $GITHUB_ENV
             echo "USE_KERNELSU=${{ github.event.inputs.USE_KERNELSU }}" >> $GITHUB_ENV
-            echo "USE_KPROBES=${{ github.event.inputs.USE_KPROBES }}" >> $GITHUB_ENV
-            echo "OS_TYPE=${{ github.event.inputs.OS_TYPE }}" >> $GITHUB_ENV
-            echo "HARDWARE_CODE=${{ github.event.inputs.HARDWARE_CODE }}" >> $GITHUB_ENV
+            echo "USE_DOCKER=${{ github.event.inputs.USE_DOCKER }}" >> $GITHUB_ENV
         fi
 
     - name: Setup build kernel environment
@@ -100,37 +82,62 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_SOURCE_BRANCH }} android-kernel --depth=1
+        git clone ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_SOURCE_BRANCH }} common --depth=1
 
     - name: Setup KernelSU
       if: env.USE_KERNELSU == 'true'
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        cd $GITHUB_WORKSPACE/kernel_workspace/
+        rm -rf common/driver/kernelsu
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        if [ ${{ env.USE_KPROBES }} = true ]; then
-            echo "CONFIG_MODULES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-            echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-            echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-            echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-        fi
+        echo "CONFIG_MODULES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
         echo "ANYKERNELNAME=-KernelSU" >> $GITHUB_ENV
-
+    - name: Setup Docker support for Android
+      if: env.USE_DOCKER == 'true'
+      run: |
+        echo "Get Missing"
+        base64 -d <<EOF
+        Q09ORklHX05FVF9OUz15CkNPTkZJR19QSURfTlM9eQpDT05GSUdfSVBDX05TPXkKQ09ORklHX1VU
+U19OUz15CkNPTkZJR19DR1JPVVBTPXkKQ09ORklHX0NHUk9VUF9ERVZJQ0U9eQpDT05GSUdfQ0dS
+T1VQX1NDSEVEPXkKQ09ORklHX0tFWVM9eQpDT05GSUdfQlJJREdFX05FVEZJTFRFUj15CkNPTkZJ
+R19ORVRGSUxURVJfWFRfTUFUQ0hfQUREUlRZUEU9eQpDT05GSUdfTkVURklMVEVSX1hUX01BVENI
+X0lQVlM9eQpDT05GSUdfTkVURklMVEVSX1hUX01BUks9eQpDT05GSUdfTkZfTkFUPXkKQ09ORklH
+X1BPU0lYX01RVUVVRT15CkNPTkZJR19ORl9OQVRfSVBWND15CkNPTkZJR19ORl9OQVRfTkVFREVE
+PXkKQ09ORklHX1VTRVJfTlM9eQpDT05GSUdfU0VDQ09NUF9GSUxURVI9eQpDT05GSUdfQ0dST1VQ
+X1BJRFM9eQpDT05GSUdfTUVNQ0dfU1dBUF9FTkFCTEVEPXkKQ09ORklHX0lPU0NIRURfQ0ZRPXkK
+Q09ORklHX0JMS19ERVZfVEhST1RUTElORz15CkNPTkZJR19DR1JPVVBfUEVSRj15CkNPTkZJR19D
+R1JPVVBfSFVHRVRMQj15CkNPTkZJR19ORVRfQ0xTX0NHUk9VUD15CkNPTkZJR19DR1JPVVBfTkVU
+X1BSSU89eQpDT05GSUdfQ0ZTX0JBTkRXSURUSD15CkNPTkZJR19GQUlSX0dST1VQX1NDSEVEPXkK
+Q09ORklHX1JUX0dST1VQX1NDSEVEPXkKQ09ORklHX0lQX1ZTPXkKQ09ORklHX0lQX1ZTX05GQ1Q9
+eQpDT05GSUdfSVBfVlNfUFJPVE9fVENQPXkKQ09ORklHX0lQX1ZTX1BST1RPX1VEUD15CkNPTkZJ
+R19JUF9WU19SUj15CkNPTkZJR19TRUNVUklUWV9BUFBBUk1PUj15CkNPTkZJR19WWExBTj15CkNP
+TkZJR19CUklER0VfVkxBTl9GSUxURVJJTkc9eQpDT05GSUdfQ1JZUFRPPXkKQ09ORklHX0NSWVBU
+T19BRUFEPXkKQ09ORklHX0NSWVBUT19TRVFJVj15CkNPTkZJR19DUllQVE9fR0hBU0g9eQpDT05G
+SUdfWEZSTT15CkNPTkZJR19YRlJNX0FMR089eQpDT05GSUdfSU5FVF9YRlJNX01PREVfVFJBTlNQ
+T1JUPXkKQ09ORklHX0lQVkxBTj15CkNPTkZJR19NQUNWTEFOPXkKQ09ORklHX05GX05BVF9GVFA9
+eQpDT05GSUdfTkZfTkFUX1RGVFA9eQpDT05GSUdfQlRSRlNfRlM9eQpDT05GSUdfQlRSRlNfRlNf
+UE9TSVhfQUNMPXkKQ09ORklHX0RNX1RISU5fUFJPVklTSU9OSU5HPXkK
+EOF >> common/arch/arm64/config/${{ env.KERNEL_DEFCONFIG }}
     - name: Build kernel
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        cd $GITHUB_WORKSPACE/kernel_workspace/
         export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$PATH
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        make -j$(nproc --all) O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }} ${{ env.KERNEL_DEFCONFIG }}
-        make -j$(nproc --all) O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }}
+        make -j$(nproc --all) -C common O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }} ${{ env.KERNEL_DEFCONFIG }}
+        make -j$(nproc --all) -C common O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }}
 
     - name: Make Anykernel for your kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone https://github.com/denislov/anykernel3.git
-        cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} anykernel3/kernels/${{ env.OS_TYPE }}/
-        cp android-kernel/out/arch/arm64/boot/dtbo.img anykernel3/kernels/${{ env.OS_TYPE }}/
-        find android-kernel/out/arch/arm64/boot/dts/vendor/${{ env.HARDWARE_CODE }} -name '*.dtb' -exec cat {} + > anykernel3/kernels/${{ env.OS_TYPE }}/dtb
+        cp out/arch/arm64/boot/Image anykernel3/kernels/miui/
+        cp out/arch/arm64/boot/dtbo.img anykernel3/kernels/miui/
+        cp out/.config  anykernel3/config.txt
+        find android-kernel/out/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + > anykernel3/kernels/miui/dtb
         rm -rf anykernel3/.git* anykernel3/README.md
 
     - name: Upload AnyKernel3
