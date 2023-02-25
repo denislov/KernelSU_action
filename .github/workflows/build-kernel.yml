@@ -90,10 +90,10 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace/
         rm -rf common/driver/kernelsu
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        echo "CONFIG_MODULES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-        echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-        echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
-        echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_MODULES=y" >> common/arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_KPROBES=y" >> common/arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_HAVE_KPROBES=y" >> common/arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
+        echo "CONFIG_KPROBE_EVENTS=y" >> common/arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
         echo "ANYKERNELNAME=-KernelSU" >> $GITHUB_ENV
     - name: Setup Docker support for Android
       if: env.USE_DOCKER == 'true'
@@ -101,7 +101,7 @@ jobs:
         echo "Get Missing"
         wget https://raw.githubusercontent.com/denislov/KernelSU_action/alioth/missing64
         echo "Patch missing"
-        base64 -d missing64 >> common/arch/arm64/config/${{ env.KERNEL_DEFCONFIG }}
+        base64 -d missing64 >> common/arch/arm64/configs/${{ env.KERNEL_DEFCONFIG }}
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/
