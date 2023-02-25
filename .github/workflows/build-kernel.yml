@@ -98,6 +98,7 @@ jobs:
     - name: Setup Docker support for Android
       if: env.USE_DOCKER == 'true'
       run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/
         echo "Get Missing"
         wget https://raw.githubusercontent.com/denislov/KernelSU_action/alioth/missing64
         echo "Patch missing"
