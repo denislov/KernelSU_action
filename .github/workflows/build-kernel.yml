@@ -109,8 +109,8 @@ jobs:
         export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$PATH
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        make -j$(nproc --all) -C common O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }} ${{ env.KERNEL_DEFCONFIG }}
-        make -j$(nproc --all) -C common O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }}
+        make -j$(nproc --all) -C $(pwd)/common O=$(pwd)/out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }} ${{ env.KERNEL_DEFCONFIG }}
+        make -j$(nproc --all) -C $(pwd)/common O=$(pwd)/out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-aosp/bin/aarch64-linux-android- CC=clang ${{ env.BUILD_EXTRA_COMMAND }}
 
     - name: Make Anykernel for your kernel
       run: |
@@ -119,7 +119,7 @@ jobs:
         cp out/arch/arm64/boot/Image anykernel3/kernels/miui/
         cp out/arch/arm64/boot/dtbo.img anykernel3/kernels/miui/
         cp out/.config  anykernel3/config.txt
-        find android-kernel/out/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + > anykernel3/kernels/miui/dtb
+        find out/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + > anykernel3/kernels/miui/dtb
         rm -rf anykernel3/.git* anykernel3/README.md
 
     - name: Upload AnyKernel3
